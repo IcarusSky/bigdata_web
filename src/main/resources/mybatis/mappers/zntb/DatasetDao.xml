@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sunmnet.bigdata.web.zntb.persistent.DatasetDao">
+    <select id="getDatasetList" resultType="com.sunmnet.bigdata.web.zntb.model.po.DashboardDataset">
+      SELECT
+        s.dataset_id AS id,
+        s.user_id AS userId,
+        s.dataset_name AS name,
+        s.dataset_type AS type,
+        s.datasource_id AS datasourceId,
+        s.data_json AS data,
+        s.category_id AS categoryId,
+        case
+          when s.category_id = -1 then ''
+          ELSE c.category_name
+        end AS categoryName,
+        s.create_time AS createTime,
+        s.update_time AS updateTime
+      FROM
+        dashboard_dataset s left outer join
+        dashboard_category c on c.category_id = s.category_id and c.category_type = 'dataset'
+      ORDER BY s.create_time desc, s.dataset_name
+    </select>
+
+    <select id="getDatasetListByCategoryId" resultType="com.sunmnet.bigdata.web.zntb.model.po.DashboardDataset">
+      SELECT * FROM (
+        SELECT
+          s.dataset_id AS id,
+          s.user_id AS userId,
+          s.dataset_name AS name,
+          s.dataset_type AS type,
+          s.datasource_id AS datasourceId,
+          s.data_json AS data,
+          s.category_id AS categoryId,
+          case
+            when s.category_id = -1 then ''
+            ELSE c.category_name
+          end AS categoryName,
+          s.create_time AS createTime,
+          s.update_time AS updateTime
+        FROM
+          dashboard_dataset s left outer join
+          dashboard_category c on c.category_id = s.category_id and c.category_type = 'dataset'
+        ORDER BY s.create_time desc, s.dataset_name
+      ) a where a.categoryId = #{categoryId}
+    </select>
+
+  <select id="getDatasetCountByCategoryId" resultType="java.lang.Integer">
+    select count(*) from dashboard_dataset where category_id = #{categoryId}
+  </select>
+
+    <select id="getDatasetCountByDatasourceId" resultType="java.lang.Integer">
+        SELECT count(1) from dashboard_dataset where datasource_id = #{datasourceId}
+    </select>
+
+    <select id="getDataset" resultType="com.sunmnet.bigdata.web.zntb.model.po.DashboardDataset">
+       SELECT
+       s.dataset_id id,
+       s.category_id categoryId,
+       s.user_id userId,
+       s.dataset_name name,
+       s.dataset_type type,
+       s.data_json data,
+       s.datasource_id datasourceId,
+       s.create_time createTime,
+       s.update_time updateTime
+       FROM dashboard_dataset s
+       WHERE dataset_id = #{0}
+    </select>
+
+    <insert id="save" parameterType="com.sunmnet.bigdata.web.zntb.model.po.DashboardDataset" useGeneratedKeys="true"
+            keyProperty="id">
+        <![CDATA[
+        INSERT INTO dashboard_dataset(category_id,user_id,dataset_name,dataset_type,datasource_id,data_json)
+          VALUES (#{categoryId},#{userId},#{name},#{type},#{datasourceId},#{data})
+        ]]>
+    </insert>
+
+    <update id="update" parameterType="com.sunmnet.bigdata.web.zntb.model.po.DashboardDataset">
+        <![CDATA[
+        UPDATE dashboard_dataset
+          SET
+            category_id = #{categoryId},
+            dataset_name = #{name},
+            dataset_type = #{type},
+            datasource_id = #{datasourceId},
+            data_json = #{data},
+            update_time = #{updateTime}
+          where dataset_id = #{id}
+        ]]>
+    </update>
+
+    <update id="updateName" parameterType="com.sunmnet.bigdata.web.zntb.model.po.DashboardDataset">
+        <![CDATA[
+        UPDATE dashboard_dataset
+          SET
+            dataset_name = #{name},
+            update_time = #{updateTime}
+          where dataset_id = #{id}
+        ]]>
+    </update>
+    <update id="changeCategory">
+        <![CDATA[
+        UPDATE dashboard_dataset
+          SET
+            category_id = #{categoryId}
+          where dataset_id = #{id}
+        ]]>
+    </update>
+
+    <select id="countExistDatasetName" resultType="java.lang.Integer">
+      SELECT
+        count(*)
+      from
+        dashboard_dataset d
+      where 1 = 1
+<!--         and d.user_id = #{user_id} -->
+        <if test="dataset_id != null">
+          <![CDATA[and d.dataset_id <> #{dataset_id}]]>
+        </if>
+        and d.dataset_name = #{dataset_name}
+    </select>
+
+    <delete id="delete">
+        delete from dashboard_dataset where dataset_id = #{0}
+    </delete>
+
+</mapper>

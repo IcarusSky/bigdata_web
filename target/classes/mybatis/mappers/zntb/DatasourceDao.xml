@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sunmnet.bigdata.web.zntb.persistent.DatasourceDao">
+    <select id="getDatasourceList" resultType="com.sunmnet.bigdata.web.zntb.model.po.DashboardDatasource">
+      SELECT
+        datasource_id AS id,
+        user_id       AS userId,
+        source_name   AS name,
+        source_type   AS type,
+        config        AS config,
+        create_time   AS createTime,
+        update_time   AS updateTime
+      FROM
+        dashboard_datasource
+      order by create_time desc
+    </select>
+
+    <select id="getDatasource" resultType="com.sunmnet.bigdata.web.zntb.model.po.DashboardDatasource">
+        SELECT datasource_id id,user_id userId,source_name name,source_type type ,config,create_time createTime,update_time updateTime FROM dashboard_datasource WHERE datasource_id = #{0}
+    </select>
+
+    <insert id="save" parameterType="com.sunmnet.bigdata.web.zntb.model.po.DashboardDatasource" useGeneratedKeys="true" keyProperty="id">
+        <![CDATA[
+        INSERT INTO dashboard_datasource(user_id,source_name,source_type,config) VALUES (#{userId},#{name},#{type},#{config})
+        ]]>
+    </insert>
+
+    <update id="update" parameterType="com.sunmnet.bigdata.web.zntb.model.po.DashboardDatasource">
+        <![CDATA[
+        UPDATE dashboard_datasource SET source_name = #{name},config = #{config},update_time = #{updateTime} where datasource_id = #{id}
+        ]]>
+    </update>
+
+    <select id="countExistDatasourceName" resultType="java.lang.Long">
+      SELECT
+        count(*)
+      from
+        dashboard_datasource
+      where 1 = 1
+        and user_id = #{user_id}
+        <if test="datasource_id != null">
+          <![CDATA[and datasource_id <> #{datasource_id}]]>
+        </if>
+        and source_name = #{source_name}
+    </select>
+
+    <delete id="delete">
+        DELETE FROM dashboard_datasource WHERE datasource_id = #{0}
+    </delete>
+
+</mapper>

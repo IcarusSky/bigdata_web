@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sunmnet.bigdata.web.zntb.persistent.DepartmentDao">
+    <insert id="saveDepartment" parameterType="com.sunmnet.bigdata.web.zntb.model.po.Department" useGeneratedKeys="true"
+            keyProperty="id">
+        <![CDATA[
+        INSERT INTO
+        sec_department (dep_name,user_id,parent_id)
+      VALUES (#{name},#{userId},#{parentId})
+        ]]>
+    </insert>
+
+    <insert id="batchSave">
+        INSERT INTO sec_department
+        (dep_name,parent_id,user_id)
+        VALUES
+        <foreach collection="depList" item="item" index="index" separator=",">
+            (#{item.name}, #{parentId},
+            #{userId})
+        </foreach>
+    </insert>
+
+
+    <update id="updateById" parameterType="com.sunmnet.bigdata.web.zntb.model.po.Department">
+        <![CDATA[
+        UPDATE sec_department SET
+        dep_name = #{name} , update_time = now()
+        where dep_id = #{id}
+        ]]>
+    </update>
+
+    <update id="delete">
+        <![CDATA[
+
+        UPDATE sec_department SET
+        status= 2 , update_time = now()
+        where dep_id = #{id}
+        ]]>
+    </update>
+
+    <select id="countByParentId" resultType="int">
+        select count(1)
+        from sec_department where parent_id = #{id} and status=1;
+    </select>
+
+    <select id="findListByParetId" resultType="com.sunmnet.bigdata.web.zntb.model.po.Department">
+      SELECT
+			dep_id  as id ,
+			parent_id as parentId,
+			dep_name as name
+		FROM
+			sec_department
+		WHERE
+			parent_id = #{parentId} and status=1
+    </select>
+
+    <select id="findDepById"  resultType="com.sunmnet.bigdata.web.zntb.model.po.Department">
+      SELECT
+			dep_id  as id ,
+			dep_name as name
+		FROM
+			sec_department
+		WHERE
+			dep_id = #{id}
+    </select>
+</mapper>

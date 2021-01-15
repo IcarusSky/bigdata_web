@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sunmnet.bigdata.web.zntb.persistent.FormWidgetDao">
+
+
+    <insert id="saveBatch">
+
+
+        INSERT INTO `form_widget` (
+        `form_id`,
+        `label_name`,
+        `label_type`,
+        `column_name`,
+        `column_desc`,
+        `column_type`,
+        `column_length`,
+        `required`,
+        `prompt_message`,
+        `formula`,
+        `data_prefill`,
+        `dataset_id`,
+        `prefill_json`,
+        `standard_id`,
+        `widget_json`,
+        `date_format`,
+        `is_automation`,
+        `file_size`,
+        `is_edit`
+        )
+        VALUES
+        <foreach collection="formWidgets" item="item" index="index" separator=",">
+            (
+            #{item.formId},
+            #{item.labelName},
+            #{item.labelType},
+            #{item.columnName},
+            #{item.columnDesc},
+            #{item.columnType},
+            #{item.columnLength},
+            #{item.required},
+            #{item.promptMessage},
+            #{item.formula},
+            #{item.dataPrefill},
+            #{item.datasetId},
+            #{item.prefillJson},
+            #{item.standardId},
+            #{item.widgetJson},
+            #{item.dateFormat},
+            #{item.isAutomation},
+            #{item.fileSize},
+            #{item.isEdit}
+            )
+        </foreach>
+    </insert>
+
+    <select id="getListByFormId" resultType="com.sunmnet.bigdata.web.zntb.model.po.FormWidget">
+        SELECT
+             w.column_id columnId,
+             w.form_id formId,
+             w.label_name labelName,
+             w.label_type labelType,
+             w.`column_name` columnName,
+             w.column_desc columnDesc,
+             w.column_type columnType,
+             w.column_length columnLength,
+             w.required required,
+             w.prompt_message promptMessage,
+             w.formula formula,
+             w.data_prefill dataPrefill,
+             w.dataset_id datasetId,
+             w.prefill_json prefillJson,
+             w.widget_json widgetJson,
+             w.standard_id standardId,
+             w.date_format dateFormat,
+             w.is_automation isAutomation,
+             w.file_size fileSize,
+             w.is_edit isEdit,
+			 s.category_id as datasetCategoryId
+        FROM
+          form_widget w
+			left join dashboard_dataset s on w.dataset_id = s.dataset_id
+        where
+          w.form_id = #{formId}
+    </select>
+    <delete id="deleteByFormId">
+        DELETE FROM form_widget WHERE form_id = #{formId}
+    </delete>
+
+
+  <select id="getListByDatasetId" resultType="com.sunmnet.bigdata.web.zntb.model.po.FormWidget">
+    select * from form_widget where dataset_id = #{datasetId}
+  </select>
+</mapper>

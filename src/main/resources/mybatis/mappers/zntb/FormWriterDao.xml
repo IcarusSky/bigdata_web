@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sunmnet.bigdata.web.zntb.persistent.FormWriterDao">
+    <insert id="saveBatch">
+        INSERT INTO `form_writer` (
+        `form_id`,
+        `writer_type`,
+        `writer_id`,
+        `account_type`
+        )
+        VALUES
+        <foreach collection="formWriters" item="item" index="index" separator=",">
+            (
+            #{item.formId},
+            #{item.writerType},
+            #{item.writerId},
+            #{item.accountType}
+            )
+        </foreach>
+    </insert>
+
+    <select id="getListByFormId" resultType="com.sunmnet.bigdata.web.zntb.model.po.FormWriter">
+        SELECT
+          w.`id` id,
+          w.`form_id` formId,
+          w.`writer_type` writerType,
+          w.`writer_id` writerId,
+          w.`account_type` accountType,
+		u.`name` as name,
+		case
+			when  w.writer_type != 'department' then null
+			when d.parent_id = -1 then 1
+			else 2
+		end as leavl
+        FROM
+          form_writer w
+		left join sec_user u on u.account_code = w.writer_id and w.writer_type = 'account_code'
+		left join sec_department d on d.dep_id=w.writer_id and w.writer_type = 'department'
+        where
+          form_id = #{id}
+    </select>
+
+    <delete id="deleteByFormId">
+        DELETE FROM form_writer WHERE form_id = #{formId}
+    </delete>
+    
+    <!-- 获取对应表单的所有填写人 -->
+    <select id="getWriterListByCondition" resultType="com.sunmnet.bigdata.web.zntb.model.po.SecUserExt">
+		SELECT DISTINCT
+			DISTINCT(us.id) user_id,
+			us.`name` ,
+			us.account_code,
+			us.academy_code,
+			us.academy_name,
+			us.major_code,
+			us.major_name,
+			us.department_id,
+			us.dep_name department_name,
+			us.position_id,
+			us.position_name
+		FROM
+			form_writer w
+		LEFT JOIN (
+			SELECT
+				u.`name`,
+				u.id,
+				u.account_code,
+				ext.academy_code,
+				sac.academy_name,
+				ext.major_code,
+				sma.major_name,
+				ext.department_id,
+				sde.dep_name,
+				ext.position_id,
+				spo.position_name,
+				ro.role_id,
+				u.account_type
+				
+			FROM
+				sec_user u
+			LEFT JOIN sec_user_ext ext ON u.id = ext.user_id
+			LEFT JOIN sec_academy sac ON sac.academy_code = ext.academy_code
+			LEFT JOIN sec_major sma ON sma.major_code = ext.major_code
+			LEFT JOIN sec_department sde ON sde.dep_id = ext.department_id
+			LEFT JOIN sec_dep_position spo ON spo.position_id = ext.position_id
+			LEFT JOIN sec_user_rel_role ro ON ro.user_id = u.id
+
+			WHERE 1=1
+			<if test="departmentId != null">
+				and ext.department_id = #{departmentId}
+			</if>
+			<if test="positionId != null">
+				and ext.position_id = #{positionId}
+			</if>
+			<if test="academyCode != null">
+				and sac.academy_code = #{academyCode}
+			</if>
+			<if test="academyName !=''">
+				<![CDATA[and sac.academy_name like concat('%',#{academyName},'%')]]>
+			</if>
+			<if test="majorCode != null">
+				and sma.major_code = #{majorCode} 
+			</if>
+			<if test="majorName !=''">
+				<![CDATA[and sma.major_name like concat('%',#{majorName},'%')]]>
+			</if>
+		) us ON (
+			w.writer_type = 'account_code'
+			AND writer_id = us.account_code
+		)
+		OR (
+			w.writer_type = 'academy'
+			AND writer_id = us.academy_code
+			AND w.account_type = us.account_type
+		)
+		OR (
+			w.writer_type = 'major'
+			AND writer_id = us.major_code
+			AND w.account_type = us.account_type
+		)
+		OR (
+			w.writer_type = 'department'
+			AND writer_id = us.department_id
+			AND w.account_type = us.account_type
+		)
+		OR (
+			w.writer_type = 'position'
+			AND writer_id = us.position_id
+			AND w.account_type = us.account_type
+		)
+		OR (
+			w.writer_type = 'role'
+			AND writer_id = us.role_id
+		)
+		WHERE
+			w.form_id = #{formId}
+		AND us.id IS NOT NULL   	
+    </select>
+    
+
+</mapper>

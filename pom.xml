@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <properties>
+    <skipTests>true</skipTests>
+  </properties>
+
+  <parent>
+    <groupId>com.sunmnet</groupId>
+    <artifactId>bigdata-web-parent</artifactId>
+    <version>1.0.0</version>
+  </parent>
+
+  <artifactId>bigdata-web-zntb32</artifactId>
+  <packaging>jar</packaging>
+  <name>${project.artifactId}</name>
+
+
+  <dependencies>
+    <dependency>
+      <groupId>com.sunmnet</groupId>
+      <artifactId>bigdata-web-core</artifactId>
+      <version>1.0.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.microsoft.sqlserver</groupId>
+      <artifactId>sqljdbc4</artifactId>
+      <version>4.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.oracle</groupId>
+      <artifactId>ojdbc6</artifactId>
+      <version>11.2.0.3</version>
+    </dependency>
+
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <version>2.4</version>
+    </dependency>
+
+    <dependency>
+      <groupId>fastdfs</groupId>
+      <artifactId>fastdfs-client</artifactId>
+      <version>1.25.2-RELEASE</version>
+      <scope>system</scope>
+      <systemPath>${project.basedir}/lib/fastdfs-client-1.25.2-RELEASE.jar</systemPath>
+    </dependency>
+
+<!--    <dependency>-->
+<!--      <groupId>com.github.tobato</groupId>-->
+<!--      <artifactId>fastdfs-client</artifactId>-->
+<!--      <version>1.25.2-RELEASE</version>-->
+<!--    </dependency>-->
+      <!-- cas-->
+      <dependency>
+          <groupId>net.unicon.cas</groupId>
+          <artifactId>cas-client-autoconfig-support</artifactId>
+          <version>1.4.0-GA</version>
+      </dependency>
+
+      <dependency>
+          <groupId>org.jasig.cas.client</groupId>
+          <artifactId>cas-client-core</artifactId>
+          <version>3.2.1</version>
+          <exclusions>
+              <exclusion>
+                  <groupId>javax.servlet</groupId>
+                  <artifactId>servlet-api</artifactId>
+              </exclusion>
+          </exclusions>
+      </dependency>
+
+
+  </dependencies>
+
+  <repositories>
+    <repository>
+      <id>nexus</id>
+      <name>sunmnet Team Repository</name>
+      <url>http://rd.sunmnet.com:9002/nexus/content/groups/public/</url>
+<!--      <url>http://116.62.41.187:9002/nexus/content/groups/public/</url>-->
+    </repository>
+  </repositories>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+        <version>${org.springframework.boot.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>repackage</goal>
+            </goals>
+            <configuration>
+              <classifier>exec</classifier>
+              <mainClass>com.sunmnet.bigdata.web.zntb.config.ApplicationConfig</mainClass>
+              <includeSystemScope>true</includeSystemScope>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

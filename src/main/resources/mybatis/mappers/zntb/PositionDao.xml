@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sunmnet.bigdata.web.zntb.persistent.PositionDao">
+
+    <insert id="save" parameterType="com.sunmnet.bigdata.web.zntb.model.po.Position">
+
+        INSERT INTO
+        sec_dep_position (dep_id,position_name,user_id)
+        VALUES
+        <foreach collection="list" item="item" index="index" separator=",">
+            (#{item.depId}, #{item.name},
+            #{item.userId})
+        </foreach>
+    </insert>
+
+    <update id="update">
+        <![CDATA[
+        UPDATE sec_dep_position SET
+        position_name=#{name},update_time = now()
+        where position_id = #{id}
+        ]]>
+    </update>
+
+    <update id="delete">
+        <![CDATA[
+        UPDATE sec_dep_position SET
+        status = 2, update_time = now()
+        where position_id = #{id}
+        ]]>
+    </update>
+
+    <select id="getListByDepId" resultType="com.sunmnet.bigdata.web.zntb.model.po.Position">
+        select position_id as id ,
+        dep_id as depId,
+        position_name as name
+        from sec_dep_position where dep_id = #{id} and status=1 ;
+    </select>
+
+    <select id="countByDepId" resultType="int">
+        select count(1)
+        from sec_dep_position where dep_id = #{depId} and status=1;
+    </select>
+
+    <select id="getPosByDepId" resultType="com.sunmnet.bigdata.web.zntb.model.po.Position">
+        SELECT
+            position_id AS id,
+            dep_id AS depId,
+            position_name AS name
+        FROM
+            sec_dep_position
+        WHERE
+            position_id = #{id};
+    </select>
+
+</mapper>

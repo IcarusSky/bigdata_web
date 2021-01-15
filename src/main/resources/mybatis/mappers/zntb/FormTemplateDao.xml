@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sunmnet.bigdata.web.zntb.persistent.FormTemplateDao">
+    <insert id="save" parameterType="com.sunmnet.bigdata.web.zntb.model.po.FormTemplate" useGeneratedKeys="true"
+            keyProperty="formId">
+        INSERT INTO `form_template` (
+            `form_name`,
+            `form_desc`,
+            `layout_json`,
+            `operation_json`,
+            `category_id`,
+            `user_id`
+        )
+        VALUES
+        (
+              #{formName},
+              #{formDesc},
+              #{layoutJson},
+              #{operationJson},
+              #{categoryId},
+              #{userId}
+        );
+    </insert>
+    
+    <select id="getFormTemplate" resultType="com.sunmnet.bigdata.web.zntb.model.po.FormTemplate">
+        SELECT
+        f.form_id formId,
+        f.form_name formName,
+        f.form_desc formDesc,
+        f.layout_json layoutJson,
+        f.operation_json operationJson,
+        f.category_id categoryId,
+        case
+        when c.category_id IS NULL THEN '默认分类'
+        ELSE c.category_name
+        end as categoryName,
+        f.user_id userId,
+        f.create_time createTime,
+        f.update_time updateTime,
+        u.`name` as userName,
+        d.`dep_name` as departmentName
+        FROM form_template f
+        LEFT JOIN dashboard_category c ON f.category_id = c.category_id
+        LEFT JOIN sec_user u on f.user_id = u.id
+        LEFT JOIN sec_user_ext e on e.user_id = u.id
+        LEFT JOIN sec_department d on d.dep_id = e.department_id 
+        where
+        f.form_id = #{formId}
+    </select>
+    
+    <delete id="delete">
+        DELETE FROM form_template WHERE form_id = #{formId}
+    </delete>
+
+	<select id="getFormTemplateList" resultType="com.sunmnet.bigdata.web.zntb.model.po.FormTemplate">
+       select * from (
+	        SELECT DISTINCT 
+	            f.form_id formId,
+	            f.form_name formName,
+	            f.form_desc formDesc,
+	            f.layout_json layoutJson,
+	            f.operation_json operationJson,
+	            f.category_id categoryId,
+	            case
+	              when c.category_id IS NULL THEN '默认分类'
+	              ELSE c.category_name
+	            end as categoryName,
+	            f.user_id userId,
+	            f.create_time createTime,
+	            f.update_time updateTime,
+	            u.`name` as userName,
+	            d.`dep_name` as departmentName
+	        FROM form_template f
+	          LEFT JOIN dashboard_category c ON f.category_id = c.category_id
+	          LEFT JOIN sec_user u on f.user_id = u.id
+	          LEFT JOIN sec_user_ext e on e.user_id = u.id
+        	  LEFT JOIN sec_department d on d.dep_id = e.department_id
+              order by form_name
+        ) res where 1=1
+	        <if test="formName != ''">
+	            <![CDATA[and res.formName like '%${formName}%']]>
+	        </if>
+	       <!-- order by res.updateTime desc-->
+    </select>
+
+</mapper>

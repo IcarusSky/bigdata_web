@@ -1,0 +1,554 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sunmnet.bigdata.web.zntb.persistent.FormDao">
+    <insert id="save" parameterType="com.sunmnet.bigdata.web.zntb.model.po.Form" useGeneratedKeys="true"
+            keyProperty="formId">
+        INSERT INTO `form` (
+            `form_name`,
+            `form_desc`,
+            `data_table`,
+            `layout_json`,
+            `operation_json`,
+            <if test="dataAuditorId != null">
+                `data_auditor_id`,
+            </if>
+            <if test="auditorId != null">
+                `auditor_id`,
+            </if>
+            `auditor_status`,
+            `auditor_desc`,
+            `publish_status`,
+            `required`,
+            `category_id`,
+            `user_id`,
+            `begin_time`,
+            `end_time`
+        )
+        VALUES
+        (
+              #{formName},
+              #{formDesc},
+              #{dataTable},
+              #{layoutJson},
+              #{operationJson},
+            <if test="dataAuditorId != null">
+                #{dataAuditorId},
+            </if>
+            <if test="auditorId != null">
+                #{auditorId},
+            </if>
+              #{auditorStatus},
+              #{auditorDesc},
+              #{publishStatus},
+              #{required},
+              #{categoryId},
+              #{userId},
+              #{beginTime},
+              #{endTime}
+        );
+
+    </insert>
+
+    <update id="update" parameterType="com.sunmnet.bigdata.web.zntb.model.po.Form">
+        UPDATE `form`
+        SET
+          `form_name` = #{formName},
+          `form_desc` = #{formDesc},
+          `operation_json` = #{operationJson},
+          `auditor_id` = #{auditorId},
+          `required` = #{required},
+          `category_id` = #{categoryId},
+          `begin_time` = #{beginTime},
+          `end_time` = #{endTime}
+          WHERE form_id = #{formId}
+    </update>
+    <update id="updateDataTable" parameterType="com.sunmnet.bigdata.web.zntb.model.po.Form">
+        UPDATE `form`
+        SET
+        `data_table` = #{dataTable}
+        WHERE form_id = #{formId}
+    </update>
+
+    <select id="existDataTableName" resultType="java.lang.Integer">
+        SELECT
+          COUNT(1)
+        FROM form f
+        WHERE data_table = #{dataTable}
+    </select>
+
+    <delete id="delete">
+        DELETE FROM form WHERE form_id = #{formId}
+    </delete>
+    <select id="getFormList" resultType="com.sunmnet.bigdata.web.zntb.model.po.Form">
+        select * from (
+        SELECT DISTINCT f.form_id        formId,
+                        f.form_name      formName,
+                        f.form_desc      formDesc,
+                        f.data_table     dataTable,
+                        f.layout_json    layoutJson,
+                        f.operation_json operationJson,
+                        f.auditor_id     auditorId,
+                        f.auditor_desc   auditorDesc,
+                        f.auditor_status auditorStatus,
+                        f.publish_status publishStatus,
+                        f.required       required,
+                        f.category_id    categoryId,
+                        case
+                            when c.category_id IS NULL THEN '默认分类'
+                            ELSE c.category_name
+                            end  as      categoryName,
+                        f.user_id        userId,
+                        f.begin_time     beginTime,
+                        f.end_time       endTime,
+                        f.create_time    createTime,
+                        f.update_time    updateTime,
+                        u.`name` as      userName
+        FROM form f
+                 LEFT JOIN dashboard_category c ON f.category_id = c.category_id
+                 LEFT JOIN sec_user u on f.user_id = u.id
+        left join form_writer w on f.form_id = w.form_id
+        where f.user_id = #{userId}
+           or f.auditor_id = #{userId}
+           or f.form_id in (select form_id
+                            from form_writer fda
+                                     left join (select u.id,
+                                                       u.account_code,
+                                                       ext.academy_code,
+                                                       ext.major_code,
+                                                       ext.department_id,
+                                                       ext.position_id,
+                                                       ro.role_id,
+                                                       u.account_type
+                                                from sec_user u
+                                                         left join sec_user_ext ext on u.id = ext.user_id
+                                                         left join sec_user_rel_role ro on ro.user_id = u.id) us on us.id = #{userId}
+                            where (fda.writer_type = 'account_code' and fda.writer_id = us.account_code)
+                               or (fda.writer_type = 'academy' and fda.writer_id = us.academy_code AND
+                                   fda.account_type = us.account_type)
+                               or (fda.writer_type = 'major' and fda.writer_id = us.major_code AND
+                                   fda.account_type = us.account_type)
+                               or (fda.writer_type = 'department' and fda.writer_id = us.department_id AND
+                                   fda.account_type = us.account_type)
+                               or (fda.writer_type = 'position' and fda.writer_id = us.position_id AND
+                                   fda.account_type = us.account_type)
+                               or (fda.writer_type = 'role' and fda.writer_id = us.role_id)
+        )
+           or f.form_id in (select form_id
+                            from form_data_auditor fda
+                                     left join (select u.id,
+                                                       u.account_code,
+                                                       ext.academy_code,
+                                                       ext.major_code,
+                                                       ext.department_id,
+                                                       ext.position_id,
+                                                       ro.role_id,
+                                                       u.account_type
+                                                from sec_user u
+                                                         left join sec_user_ext ext on u.id = ext.user_id
+                                                         left join sec_user_rel_role ro on ro.user_id = u.id) us on us.id = #{userId}
+                            where (fda.auditor_type = 'account_code' and fda.auditor_id = us.account_code)
+                               or (fda.auditor_type = 'academy' and fda.auditor_id = us.academy_code AND
+                                   fda.account_type = us.account_type)
+                               or (fda.auditor_type = 'major' and fda.auditor_id = us.major_code AND
+                                   fda.account_type = us.account_type)
+                               or (fda.auditor_type = 'department' and fda.auditor_id = us.department_id AND
+                                   fda.account_type = us.account_type)
+                               or (fda.auditor_type = 'position' and fda.auditor_id = us.position_id AND
+                                   fda.account_type = us.account_type)
+                               or (fda.auditor_type = 'role' and fda.auditor_id = us.role_id))
+        order by form_name
+        ) res where 1=1
+        	<if test="publishStatus != null">
+	            <![CDATA[and res.publishStatus = #{publishStatus}]]>
+	        </if>
+	        <if test="auditorStatus != null">
+	            <![CDATA[and res.auditorStatus = #{auditorStatus}]]>
+	        </if>
+	        <if test="formName != ''">
+	            <![CDATA[and res.formName like '%${formName}%']]>
+	        </if>
+	        <if test="categoryId != null">
+	            <![CDATA[and res.categoryId = #{categoryId}]]>
+	        </if>
+	       <!-- order by res.updateTime desc-->
+    </select>
+    
+    <select id="getFormListOld" resultType="com.sunmnet.bigdata.web.zntb.model.po.Form">
+        SELECT 
+            f.form_id formId,
+            f.form_name formName,
+            f.form_desc formDesc,
+            f.data_table dataTable,
+            f.layout_json layoutJson,
+            f.operation_json operationJson,
+            f.auditor_id auditorId,
+            f.auditor_desc auditorDesc,
+            f.auditor_status auditorStatus,
+            f.publish_status publishStatus,
+            f.required required,
+            f.category_id categoryId,
+            case
+              when c.category_id IS NULL THEN '默认分类'
+              ELSE c.category_name
+            end as categoryName,
+            f.user_id userId,
+            f.begin_time beginTime,
+            f.end_time endTime,
+            f.create_time createTime,
+            f.update_time updateTime,
+            u.`name` as userName
+        FROM form f
+          LEFT JOIN dashboard_category c ON f.category_id = c.category_id
+          LEFT JOIN sec_user u on f.user_id = u.id
+          left join form_writer w on f.form_id = w.form_id 
+        where f.user_id = #{userId}
+        <if test="publishStatus != null">
+            <![CDATA[and f.publish_status = #{publishStatus}]]>
+        </if>
+        <if test="auditorStatus != null">
+            <![CDATA[and f.auditor_status = #{auditorStatus}]]>
+        </if>
+        <if test="formName != ''">
+            <![CDATA[and f.form_name like '%${formName}%']]>
+        </if>
+        <if test="categoryId != null">
+            <![CDATA[and f.category_id = #{categoryId}]]>
+        </if>
+        order by f.update_time desc
+    </select>
+
+    <select id="getForm" resultType="com.sunmnet.bigdata.web.zntb.model.po.Form">
+        SELECT
+        f.form_id formId,
+        f.form_name formName,
+        f.form_desc formDesc,
+        f.data_table dataTable,
+        f.layout_json layoutJson,
+        f.operation_json operationJson,
+        f.auditor_id auditorId,
+        f.data_auditor_id dataAuditorId,
+        f.auditor_status auditorStatus,
+        f.auditor_desc auditorDesc,
+        f.publish_status publishStatus,
+        f.required required,
+        f.category_id categoryId,
+        case
+        when c.category_id IS NULL THEN '默认分类'
+        ELSE c.category_name
+        end as categoryName,
+        f.user_id userId,
+        f.begin_time beginTime,
+        f.end_time endTime,
+        f.create_time createTime,
+        f.update_time updateTime,
+        u.`name` as userName
+        FROM form f
+        LEFT JOIN dashboard_category c ON f.category_id = c.category_id
+        LEFT JOIN sec_user u on f.user_id = u.id
+        where
+        f.form_id = #{id}
+    </select>
+
+
+    <select id="getWriteList" resultType="com.sunmnet.bigdata.web.zntb.model.po.Form">
+        SELECT * from (
+        select
+        DISTINCT
+        f.form_id formId,
+        f.form_name formName,
+        f.form_desc formDesc,
+        f.data_table dataTable,
+        f.layout_json layoutJson,
+        f.operation_json operationJson,
+        f.auditor_id auditorId,
+        f.auditor_status auditorStatus,
+        f.publish_status publishStatus,
+        f.required required,
+        f.category_id categoryId,
+        case
+        when c.category_id IS NULL THEN '默认分类'
+        ELSE c.category_name
+        end as categoryName,
+        f.user_id userId,
+        f.begin_time beginTime,
+        f.end_time endTime,
+        f.create_time createTime,
+        f.update_time updateTime,
+        case
+            WHEN ws.form_id is null THEN -1
+            ELSE ws.data_auditor_status
+        end as writeStatus,
+        u.`name` as userName
+        FROM
+        form f
+        LEFT JOIN
+          (
+            select
+              form_id,min(auditor_status) data_auditor_status
+            from form_write_status
+            where
+              user_id = #{userId}
+            GROUP BY form_id)
+        ws on f.form_id = ws.form_id
+        LEFT JOIN form_writer w on f.form_id = w.form_id
+        LEFT JOIN sec_user u on f.user_id = u.id
+        LEFT JOIN dashboard_category c ON f.category_id = c.category_id
+        LEFT JOIN
+        (select
+        u.id,u.account_code,ext.academy_code,ext.major_code,ext.department_id,ext.position_id,ro.role_id,u.account_type
+        from
+        sec_user u
+        left join sec_user_ext ext on u.id = ext.user_id
+        left join sec_user_rel_role ro on ro.user_id = u.id) us
+        on us.id = #{userId}
+        WHERE
+        (w.writer_type = 'account_code' and writer_id = us.account_code)
+        or (w.writer_type = 'academy' and writer_id = us.academy_code AND w.account_type = us.account_type)
+        or (w.writer_type = 'major' and writer_id = us.major_code AND w.account_type = us.account_type)
+        or (w.writer_type = 'department' and writer_id = us.department_id AND w.account_type = us.account_type)
+        or (w.writer_type = 'position' and writer_id = us.position_id AND w.account_type = us.account_type)
+        or (w.writer_type = 'role' and writer_id = us.role_id)
+        ) res
+        WHERE
+        auditorStatus = 1 and publishStatus = 1
+        <if test="writeStatus != null">
+            <![CDATA[and writeStatus = #{writeStatus}]]>
+        </if>
+        <if test="required != null">
+            <![CDATA[and required = #{required}]]>
+        </if>
+        <if test="formName != ''">
+            <![CDATA[and formName like '%${formName}%']]>
+        </if>
+        ORDER BY updateTime DESC
+    </select>
+
+    <select id="getWriteTop" resultType="com.sunmnet.bigdata.web.zntb.model.po.Form">
+        SELECT * from (
+        select
+            DISTINCT
+            f.form_id formId,
+            f.form_name formName,
+            f.form_desc formDesc,
+            f.data_table dataTable,
+            f.layout_json layoutJson,
+            f.operation_json operationJson,
+            f.auditor_id auditorId,
+            f.auditor_status auditorStatus,
+            f.publish_status publishStatus,
+            f.required required,
+            f.category_id categoryId,
+            case
+            when c.category_id IS NULL THEN '默认分类'
+            ELSE c.category_name
+            end as categoryName,
+            f.user_id userId,
+            f.begin_time beginTime,
+            f.end_time endTime,
+            f.create_time createTime,
+            f.update_time updateTime,
+            case
+            WHEN ws.form_id is null THEN -1
+            ELSE ws.data_auditor_status
+            end as writeStatus,
+            mak.`name` as userName
+        FROM
+            form f
+            LEFT JOIN
+                (
+                select
+                  form_id,min(auditor_status) data_auditor_status
+                from form_write_status
+                where
+                  user_id = #{userId}
+                GROUP BY form_id,auditor_status)
+              ws on f.form_id = ws.form_id
+            LEFT JOIN form_writer w on f.form_id = w.form_id
+            LEFT JOIN sec_user mak on f.user_id = mak.id
+            LEFT JOIN
+              (select
+                u.id,u.account_code,ext.academy_code,ext.major_code,ext.department_id,ext.position_id,ro.role_id,u.account_type
+                from
+                sec_user u
+                left join sec_user_ext ext on u.id = ext.user_id
+                left join sec_user_rel_role ro on ro.user_id = u.id) us
+            on us.id = #{userId}
+            LEFT JOIN dashboard_category c ON f.category_id = c.category_id
+        WHERE
+            (w.writer_type = 'account_code' and writer_id = us.account_code)
+            or (w.writer_type = 'academy' and writer_id = us.academy_code AND w.account_type = us.account_type)
+            or (w.writer_type = 'major' and writer_id = us.major_code AND w.account_type = us.account_type)
+            or (w.writer_type = 'department' and writer_id = us.department_id AND w.account_type = us.account_type)
+            or (w.writer_type = 'position' and writer_id = us.position_id AND w.account_type = us.account_type)
+            or (w.writer_type = 'role' and writer_id = us.role_id)
+        ) res
+        WHERE
+        auditorStatus = 1 and publishStatus = 1 and
+        required = 1 and now() BETWEEN beginTime and endTime
+        ORDER BY endTime
+        limit 4
+    </select>
+    <update id="publish">
+        <![CDATA[
+        UPDATE form SET
+          publish_status = 1
+        where form_id = #{formId}
+        ]]>
+    </update>
+    <update id="unPublish">
+        <![CDATA[
+        UPDATE form SET
+          publish_status = 1
+        where form_id = #{formId}
+        ]]>
+    </update>
+    <update id="auditor">
+        <![CDATA[
+        UPDATE form SET
+          auditor_status = #{auditorStatus},
+          auditor_desc = #{auditorDesc}
+        where form_id = #{formId}
+        ]]>
+    </update>
+
+    <select id="getAuditorList" resultType="com.sunmnet.bigdata.web.zntb.model.po.Form">
+            select
+                f.form_id formId,
+                f.form_name formName,
+                f.form_desc formDesc,
+                f.data_table dataTable,
+                f.layout_json layoutJson,
+                f.operation_json operationJson,
+                f.auditor_id auditorId,
+                f.auditor_status auditorStatus,
+                f.publish_status publishStatus,
+                f.required required,
+                f.category_id categoryId,
+                case
+                    when c.category_id IS NULL THEN '默认分类'
+                    ELSE c.category_name
+                end as categoryName,
+                f.user_id userId,
+                f.begin_time beginTime,
+                f.end_time endTime,
+                f.create_time createTime,
+                f.update_time updateTime,
+                u.`name` as userName
+            FROM
+                form f
+                LEFT JOIN sec_user u on f.user_id = u.id
+                LEFT JOIN dashboard_category c ON f.category_id = c.category_id
+            WHERE
+                f.auditor_id = #{userId}
+                <if test="formName != ''">
+                    <![CDATA[and f.form_name like '%${formName}%']]>
+                </if>
+                <if test="auditorStatus != null">
+                    <![CDATA[and f.auditor_status = #{auditorStatus}]]>
+                </if>
+            ORDER BY updateTime DESC
+    </select>
+    <select id="getDataAuditorList" resultType="com.sunmnet.bigdata.web.zntb.model.po.Form">
+        select f.form_id        formId,
+               f.form_name      formName,
+               f.form_desc      formDesc,
+               f.data_table     dataTable,
+               f.layout_json    layoutJson,
+               f.operation_json operationJson,
+               f.auditor_id     auditorId,
+               f.auditor_status auditorStatus,
+               f.publish_status publishStatus,
+               f.required       required,
+               f.category_id    categoryId,
+               case
+                   when c.category_id IS NULL THEN '默认分类'
+                   ELSE c.category_name
+                   end  as      categoryName,
+               f.user_id        userId,
+               f.begin_time     beginTime,
+               f.end_time       endTime,
+               f.create_time    createTime,
+               f.update_time    updateTime,
+               u.`name` as      userName
+        FROM form f
+                 LEFT JOIN sec_user u on f.user_id = u.id
+                 LEFT JOIN dashboard_category c ON f.category_id = c.category_id
+        WHERE f.form_id in (select form_id
+                            from form_data_auditor fda
+                                     left join (select u.id,
+                                                       u.account_code,
+                                                       ext.academy_code,
+                                                       ext.major_code,
+                                                       ext.department_id,
+                                                       ext.position_id,
+                                                       ro.role_id,
+                                                       u.account_type
+                                                from sec_user u
+                                                         left join sec_user_ext ext on u.id = ext.user_id
+                                                         left join sec_user_rel_role ro on ro.user_id = u.id) us on us.id = #{userId}
+                            where (fda.auditor_type = 'account_code' and fda.auditor_id = us.account_code)
+                               or (fda.auditor_type = 'academy' and fda.auditor_id = us.academy_code AND fda.account_type = us.account_type)
+                               or (fda.auditor_type = 'major' and fda.auditor_id = us.major_code AND fda.account_type = us.account_type)
+                               or (fda.auditor_type = 'department' and fda.auditor_id = us.department_id AND fda.account_type = us.account_type)
+                               or (fda.auditor_type = 'position' and fda.auditor_id = us.position_id AND fda.account_type = us.account_type)
+                               or (fda.auditor_type = 'role' and fda.auditor_id = us.role_id))
+        <if test="formName != ''">
+            <![CDATA[and f.form_name like '%${formName}%']]>
+        </if>
+        ORDER BY updateTime DESC
+    </select>
+	<update id="changeTime" parameterType="com.sunmnet.bigdata.web.zntb.model.po.Form">
+        UPDATE `form`
+        SET
+          `begin_time` = #{beginTime},
+          `end_time` = #{endTime}
+          WHERE form_id = #{formId}
+    </update>
+
+  <select id="countByCategoryId" resultType="java.lang.Integer">
+    select count(*) from form where category_id = #{categoryId}
+  </select>
+
+
+    <select id="getFormAllList" resultType="com.sunmnet.bigdata.web.zntb.model.po.Form">
+        select * from (
+        SELECT DISTINCT
+        f.form_id formId,
+        f.form_name formName,
+        f.form_desc formDesc,
+        f.data_table dataTable,
+        f.layout_json layoutJson,
+        f.operation_json operationJson,
+        f.auditor_id auditorId,
+        f.auditor_desc auditorDesc,
+        f.auditor_status auditorStatus,
+        f.publish_status publishStatus,
+        f.required required,
+        f.category_id categoryId,
+        case
+        when c.category_id IS NULL THEN '默认分类'
+        ELSE c.category_name
+        end as categoryName,
+        f.user_id userId,
+        f.begin_time beginTime,
+        f.end_time endTime,
+        f.create_time createTime,
+        f.update_time updateTime,
+        u.`name` as userName
+        FROM form f
+        LEFT JOIN dashboard_category c ON f.category_id = c.category_id
+        LEFT JOIN sec_user u on f.user_id = u.id
+        left join form_writer w on f.form_id = w.form_id
+        ) res where 1=1
+        <if test="publishStatus != null">
+            <![CDATA[and res.publishStatus = #{publishStatus}]]>
+        </if>
+        <if test="formName != null and formName != ''">
+            <![CDATA[and res.formName like '%${formName}%']]>
+        </if>
+        <if test="categoryId != null">
+            <![CDATA[and res.categoryId = #{categoryId}]]>
+        </if>
+        order by res.updateTime desc
+    </select>
+</mapper>

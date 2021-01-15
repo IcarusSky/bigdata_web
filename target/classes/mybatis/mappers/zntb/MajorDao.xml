@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sunmnet.bigdata.web.zntb.persistent.MajorDao">
+    <select id="countByAcademyCode" resultType="int">
+        select COUNT(1)
+        from sec_major
+         where academy_code = #{academyCode} and status=1
+    </select>
+
+    <insert id="save" parameterType="com.sunmnet.bigdata.web.zntb.model.po.Major">
+        <![CDATA[
+
+        INSERT INTO
+        sec_major (major_code,major_name,academy_code,academy_name)
+        VALUES (#{code},#{name},#{academyCode},#{academyName})
+
+        ]]>
+    </insert>
+
+    <update id="update">
+        <![CDATA[
+
+        UPDATE sec_major SET
+        major_name=#{name},academy_code = #{academyCode},academy_name = #{academyName} , update_time = now()
+        where major_code = #{code}
+
+        ]]>
+    </update>
+
+    <update id="delete">
+        <![CDATA[
+
+        UPDATE sec_major SET
+        status = 2, update_time = now()
+        where major_code = #{code}
+
+        ]]>
+    </update>
+
+    <select id="findListByAcademyCode" resultType="com.sunmnet.bigdata.web.zntb.model.po.Major">
+        select major_code as code ,
+        major_name as name
+        from sec_major where academy_code = #{academyCode} and status=1;
+    </select>
+
+    <select id="countByMajorCode" resultType="int">
+        select count(1)
+        from sec_major where major_code = #{majorCode} and status = 1 ;
+    </select>
+
+    <select id="countByMajorName" resultType="int">
+        select count(1)
+        from sec_major where major_name = #{majorName} and status = 1 ;
+    </select>
+
+    <select id="findByCode" resultType="com.sunmnet.bigdata.web.zntb.model.po.Major">
+        select  major_code as code ,
+         major_name as name
+        from sec_major where major_code = #{majorCode} and status = 1 ;
+    </select>
+</mapper>

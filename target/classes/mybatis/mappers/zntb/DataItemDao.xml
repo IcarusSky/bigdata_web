@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sunmnet.bigdata.web.zntb.persistent.DataItemDao">
+	<insert id="save">
+		<![CDATA[
+			INSERT INTO data_item (chinese_field, english_field, data_source, user_id )
+			VALUES (#{chineseField},#{englishField},#{dataSource},#{userId})
+		]]>
+	</insert>
+	<select id="getDataItem" resultType="com.sunmnet.bigdata.web.zntb.model.po.DataItem">
+		<![CDATA[
+			SELECT
+			d.id id,
+			d.chinese_field chineseField,
+			d.english_field englishField,
+			d.data_source dataSource,
+			d.user_id userId,
+			d.create_time createTime,
+			d.update_time updateTime,
+			u.`name` as userName
+			FROM data_item d
+			LEFT JOIN sec_user u on d.user_id = u.id
+			where
+			d.id = #{id}
+		]]>
+	</select>
+	<update id="update" parameterType="com.sunmnet.bigdata.web.zntb.model.po.DataItem">
+        <![CDATA[
+	        UPDATE data_item SET
+	       	chinese_field = #{chineseField} , english_field = #{englishField} , data_source = #{dataSource} ,user_id = #{userId}, update_time = now()
+	        where id = #{id}
+        ]]>
+	</update>
+	<delete id="delete">
+        <![CDATA[
+	        DELETE FROM data_item 
+	        where id = #{id}
+        ]]>
+    </delete>
+    <delete id="batchDelete">
+    	DELETE FROM data_item
+    	where id in 
+    	<foreach collection="ids" item="id" index="no" open="(" separator="," close=")">
+    		#{id}
+    	</foreach>
+    </delete>
+	
+	<select id="getDataItemList" resultType="com.sunmnet.bigdata.web.zntb.model.po.DataItem">
+        SELECT
+			d.id id,
+			d.chinese_field chineseField,
+			d.english_field englishField,
+			d.data_source dataSource,
+			d.user_id userId,
+			d.create_time createTime,
+			d.update_time updateTime,
+			u.`name` as userName
+		FROM data_item d
+		LEFT JOIN sec_user u on d.user_id = u.id
+        ORDER BY
+            d.update_time DESC
+    </select>
+    
+    <select id="getListByCondition" resultType="com.sunmnet.bigdata.web.zntb.model.po.DataItem">
+    	SELECT 
+    		d.id id,
+			d.chinese_field chineseField,
+			d.english_field englishField,
+			d.data_source dataSource,
+			d.user_id userId,
+			d.create_time createTime,
+			d.update_time updateTime,
+			u.`name` as userName
+		FROM data_item d
+		LEFT JOIN sec_user u on d.user_id = u.id
+		WHERE 1=1
+		<if test="chineseField !=''">
+			<![CDATA[and d.chinese_field like concat('%',#{chineseField},'%')]]>
+		</if>
+		<if test="englishField !=''">
+			<![CDATA[and d.english_field like concat('%',#{englishField},'%')]]>
+		</if>
+		<if test="dataSource !=''">
+			<![CDATA[and d.data_source like concat('%',#{dataSource},'%')]]>
+		</if>
+		ORDER BY
+            d.update_time DESC
+    </select>
+    
+    <!-- 根据字段中文名称和字段英文名称进行组合查询 -->
+    <select id="getListByCondition2" resultType="com.sunmnet.bigdata.web.zntb.model.po.DataItem">
+    	SELECT 
+    		d.id id,
+			d.chinese_field chineseField,
+			d.english_field englishField,
+			d.data_source dataSource,
+			d.user_id userId,
+			d.create_time createTime,
+			d.update_time updateTime,
+			u.`name` as userName
+		FROM data_item d
+		LEFT JOIN sec_user u on d.user_id = u.id
+		WHERE d.chinese_field = #{chineseField}
+		and d.english_field = #{englishField}
+		ORDER BY
+            d.update_time DESC
+    </select>
+	
+</mapper>

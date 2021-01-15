@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sunmnet.bigdata.web.zntb.persistent.StandardDao">
+
+    <insert id="save" parameterType="com.sunmnet.bigdata.web.zntb.model.po.StandardSet">
+        <![CDATA[
+        INSERT INTO
+        standard_set (category_id,standard_name,standard_type,standard_value_json)
+        VALUES (#{categoryId},#{standardName},#{standardType},#{standardValueJson})
+        ]]>
+    </insert>
+
+    <update id="update" parameterType="com.sunmnet.bigdata.web.zntb.model.po.StandardSet">
+        <![CDATA[
+        UPDATE standard_set SET
+       category_id = #{categoryId} , standard_name = #{standardName} ,standard_value_json = #{standardValueJson}, update_time = now()
+        where standard_id = #{id}
+        ]]>
+    </update>
+
+    <update id="delete">
+        <![CDATA[
+        UPDATE standard_set SET
+        status = 2 , update_time = now()
+        where standard_id = #{id}
+        ]]>
+    </update>
+    
+    <select id="getStandardById" resultType="com.sunmnet.bigdata.web.zntb.model.po.StandardSet">
+    	SELECT
+            a.standard_id AS id,
+            a.category_id AS categoryId,
+            b.category_name AS categoryName,
+            a.standard_name AS standardName,
+            a.standard_value_json AS standardValueJson,
+            a.standard_type AS standardType,
+            DATE_FORMAT(a.update_time,'%Y-%c-%d %h:%i:%s') AS updateTime
+        FROM
+            standard_set a
+        LEFT JOIN dashboard_category b ON a.category_id = b.category_id
+        WHERE
+            a.standard_id = #{id}
+        ORDER BY
+            a.update_time DESC
+    </select>
+
+    <update id="batchDelete">
+        UPDATE standard_set SET
+        status = 2 , update_time = now()
+        where standard_id in
+        <foreach collection="ids" item="arr" index="no" open="("
+                 separator="," close=")">
+            #{arr}
+        </foreach>
+    </update>
+
+    <select id="getStandardList" resultType="com.sunmnet.bigdata.web.zntb.model.po.StandardSet">
+        SELECT
+            a.standard_id AS id,
+            a.category_id AS categoryId,
+            b.category_name AS categoryName,
+            a.standard_name AS standardName,
+            a.standard_value_json AS standardValueJson,
+            a.standard_type AS standardType,
+            DATE_FORMAT(a.update_time,'%Y-%c-%d %h:%i:%s') AS updateTime
+        FROM
+            standard_set a
+        LEFT JOIN dashboard_category b ON a.category_id = b.category_id
+        WHERE
+            a. STATUS = 1
+        ORDER BY
+            a.update_time DESC
+    </select>
+
+
+    <select id="getlistByCondition" resultType="com.sunmnet.bigdata.web.zntb.model.po.StandardSet">
+        SELECT
+        a.standard_id AS id,
+        a.category_id AS categoryId,
+        b.category_name AS categoryName,
+        a.standard_name AS standardName,
+        a.standard_value_json AS standardValueJson,
+        a.standard_type as standardType,
+        DATE_FORMAT(a.update_time,'%Y-%c-%d %h:%i:%s' ) AS updateTime
+        FROM
+        standard_set a LEFT JOIN dashboard_category b ON a.category_id = b.category_id
+        where 1=1 and a.status=1
+        <if test="standardName != ''">
+            <![CDATA[and a.standard_name like  concat('%',#{standardName},'%')  ]]>
+        </if>
+        <if test="standardValue != ''">
+            <![CDATA[ AND a.standard_value_json like  concat('%',#{standardValue},'%') ]]>
+        </if>
+        ORDER BY
+        a.update_time DESC
+    </select>
+
+    <select id="getListByCategoryId" resultType="com.sunmnet.bigdata.web.zntb.model.po.StandardSet">
+        SELECT
+        a.standard_id AS id,
+        a.category_id AS categoryId,
+        b.category_name AS categoryName,
+        a.standard_name AS standardName,
+        a.standard_value_json AS standardValueJson,
+        a.standard_type as standardType,
+        DATE_FORMAT(a.update_time,'%Y-%c-%d %h:%i:%s' ) AS updateTime
+        FROM
+        standard_set a LEFT JOIN dashboard_category b ON a.category_id = b.category_id
+        where  a.status=1
+            and a.category_id =#{categoryId}
+        ORDER BY
+        a.update_time DESC
+    </select>
+
+    <select id="getListByCategoryCondition" resultType="com.sunmnet.bigdata.web.zntb.model.po.StandardSet">
+        SELECT
+        a.standard_id AS id,
+        a.category_id AS categoryId,
+        b.category_name AS categoryName,
+        a.standard_name AS standardName,
+        a.standard_value_json AS standardValueJson,
+        a.standard_type as standardType,
+        DATE_FORMAT(a.update_time,'%Y-%c-%d %h:%i:%s' ) AS updateTime
+        FROM
+        standard_set a LEFT JOIN dashboard_category b ON a.category_id = b.category_id
+        where a.status=1
+        and a.category_id =#{categoryId}
+        <if test="standardName != ''"  >
+            <![CDATA[and a.standard_name like  concat('%',#{standardName},'%')  ]]>
+        </if>
+        <if test="standardValue != ''">
+            <![CDATA[AND a.standard_value_json like  concat('%',#{standardValue},'%') ]]>
+        </if>
+        ORDER BY
+        a.update_time DESC
+    </select>
+
+  <select id="countByCategoryId" resultType="java.lang.Integer">
+    select count(*) from standard_set where category_id = #{categoryId} and status = 1
+  </select>
+</mapper>

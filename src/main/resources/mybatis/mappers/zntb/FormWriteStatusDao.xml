@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sunmnet.bigdata.web.zntb.persistent.FormWriteStatusDao">
+    <select id="getFormWriteStatus" resultType="com.sunmnet.bigdata.web.zntb.model.po.FormWriteStatus">
+        SELECT
+            id,
+            form_id formId,
+            user_id userId,
+            data_id dataId,
+            auditor_status auditorStatus,
+            auditor_desc auditorDesc,
+            write_date writeDate
+        FROM
+          form_write_status
+        where
+          form_id = #{formId}
+          AND data_id = #{dataId}
+    </select>
+    <insert id="save">
+        insert into form_write_status (form_id, user_id, data_id, auditor_status ,write_date) values
+        (#{formId},#{userId}, #{dataId}, #{auditorStatus}, now())
+    </insert>
+    <!-- Excel导入表单数据默认状态0-已保存 -->
+    <insert id="saveBatch">
+      INSERT INTO form_write_status
+        (form_id, user_id, data_id, auditor_status, write_date,is_import)
+      VALUES
+        <foreach collection="records" item="item" index="index" separator=",">
+          (#{item.formId}, #{item.userId}, #{item.dataId},0, now(),1)
+        </foreach>
+    </insert>
+    <delete id="delete">
+    	DELETE FROM form_write_status 
+    	where form_id = #{formId} 
+            AND user_id = #{userId}
+            AND data_id = #{dataId}
+    </delete>
+    
+    <update id="update">
+        UPDATE form_write_status 
+        SET
+           write_date = now(),
+           auditor_status = #{auditorStatus},
+           auditor_desc = #{auditorDesc},
+           auditor_id = #{userId}
+        where form_id = #{formId} 
+            AND data_id = #{dataId}
+    </update>
+    
+    <update id="updateOld">
+        <![CDATA[
+        UPDATE form_write_status SET
+           write_date = now(),
+           auditor_status = #{auditorStatus},
+           auditor_desc = #{auditorDesc}
+        where form_id = #{formId} 
+            AND user_id = #{userId}
+            AND data_id = #{dataId}
+        ]]>
+    </update>
+    <select id="getWriterUserCount" resultType="java.util.Map">
+        SELECT
+        DISTINCT
+        w.form_id, s.data_id, s.auditor_status
+        from
+        form_writer w
+        LEFT join
+        (
+        select
+        u.id,u.account_code,ext.academy_code,ext.major_code,ext.department_id,ext.position_id,ro.role_id,u.account_type
+        from
+        sec_user u
+        left join sec_user_ext ext on u.id = ext.user_id
+        left join sec_user_rel_role ro on ro.user_id = u.id
+        )
+        e on
+        (w.writer_type = "academy" and w.writer_id = e.academy_code AND w.account_type = e.account_type)
+        or (w.writer_type = "major" and w.writer_id = e.major_code AND w.account_type = e.account_type)
+        or (w.writer_type = "department" and w.writer_id = e.department_id AND w.account_type = e.account_type)
+        or (w.writer_type = "position" and w.writer_id = e.position_id AND w.account_type = e.account_type)
+        or (w.writer_type = "account_code" and w.writer_id = e.account_code)
+        or (w.writer_type = "role" and writer_id = e.role_id)
+        left join form_write_status s on w.form_id = s.form_id and e.id = s.user_id
+        where e.id is not null and s.data_id is not null 
+        <if test="idList!=null and idList.size()>0">
+	        and w.form_id in
+	        <foreach collection="idList" item="arr" index="no" open="(" separator="," close=")">
+	            #{arr}
+	        </foreach>
+        </if>
+    </select>
+
+    <select id="getWriterUserList" resultType="com.sunmnet.bigdata.web.zntb.model.po.FormWriteStatus">
+        SELECT DISTINCT w.form_id        formId,
+                        e.id             userId,
+                        e.`name`         writerName,
+                        e.department_id  writerDetpId,
+                        e.dep_name       writerDetpName,
+                        s.write_date     writeDate,
+                        s.data_id        dataId,
+                        s.auditor_status auditorStatus,
+                        s.auditor_desc   auditorDesc
+        from form_writer w
+        LEFT join
+        (
+            select u.id,
+                u.account_code,
+                ext.academy_code,
+                ext.major_code,
+                ext.department_id,
+                dep.dep_name,
+                ext.position_id,
+                ro.role_id,
+                u.account_type,
+                u.`name`
+            from sec_user u
+            left join sec_user_ext ext on u.id = ext.user_id
+            left join sec_user_rel_role ro on ro.user_id = u.id
+            left join sec_department dep on ext.department_id = dep.dep_id
+        ) e on (w.writer_type = "academy" and w.writer_id = e.academy_code AND w.account_type = e.account_type)
+                or (w.writer_type = "major" and w.writer_id = e.major_code AND w.account_type = e.account_type)
+                or (w.writer_type = "department" and w.writer_id = e.department_id AND w.account_type = e.account_type)
+                or (w.writer_type = "position" and w.writer_id = e.position_id AND w.account_type = e.account_type)
+                or (w.writer_type = "account_code" and w.writer_id = e.account_code)
+                or (w.writer_type = "role" and writer_id = e.role_id)
+        left join form_write_status s on w.form_id = s.form_id and e.id = s.user_id
+        where e.id is not null
+        and s.form_id is not null
+        AND w.form_id = #{formId}
+        <if test="writerName != null and writerName != ''">
+            and e.`name` like concat('%',#{writerName},'%')
+        </if>
+        <if test="writerDeptName != null and writerDeptName != ''">
+            and e.`dep_name` like concat('%',#{writerDeptName},'%')
+        </if>
+        <if test="userId != null">
+            and e.id = #{userId}
+        </if>
+        
+        <if test="datadetail != null and datadetail ==1">
+            and e.id = s.user_id
+        </if>
+        <if test="auditorStatus != null">
+            and s.auditor_status = #{auditorStatus}
+        </if>
+        <if test="auditorStatus != null">
+            and s.auditor_status = #{auditorStatus}
+        </if>
+        <if test="auditorStatus == null and userId == null">
+            and s.auditor_status != 0
+        </if>
+        <if test="startDate != null and startDate != ''">
+            <![CDATA[and date_format(s.write_date,'%Y-%m-%d') >= #{startDate}]]>
+        </if>
+        <if test="endDate != null and endDate != ''">
+            <![CDATA[and date_format(s.write_date,'%Y-%m-%d') <= #{endDate}]]>
+        </if>
+		order by s.auditor_status ASC ,s.write_date DESC
+    </select>
+
+</mapper>

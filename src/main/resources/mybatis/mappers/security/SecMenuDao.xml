@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sunmnet.bigdata.web.security.persistent.SecMenuDao">
+  <resultMap id="BaseResultMap" type="com.sunmnet.bigdata.web.security.model.po.SecMenu">
+    <id column="id" jdbcType="INTEGER" property="id"/>
+    <result column="parent_id" jdbcType="INTEGER" property="parentId"/>
+    <result column="seq" jdbcType="INTEGER" property="seq"/>
+    <result column="name" jdbcType="VARCHAR" property="name"/>
+    <result column="url" jdbcType="VARCHAR" property="url"/>
+    <result column="icon_url" jdbcType="VARCHAR" property="iconUrl"/>
+    <result column="icon_selected_url" jdbcType="VARCHAR" property="iconSelectedUrl"/>
+    <result column="status" jdbcType="TINYINT" property="status"/>
+    <result column="publish_status" jdbcType="TINYINT" property="publishStatus"/>
+    <result column="type" jdbcType="TINYINT" property="type"/>
+    <result column="remark" jdbcType="VARCHAR" property="remark"/>
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
+  </resultMap>
+  <sql id="Base_Column_List">
+    id, parent_id, seq, name, url, icon_url, icon_selected_url, status, publish_status, 
+    type, remark, create_time, update_time
+  </sql>
+  <select id="selectById" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List"/>
+    from sec_menu
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select <include refid="Base_Column_List"/> from sec_menu where status = 1 and publish_status = 1 order by seq
+  </select>
+  <select id="selectAllAuthorizedMenuOfUser" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select
+      <include refid="Base_Column_List"/>
+    from
+      sec_menu
+    where 1 = 1
+      and status = 1
+      and publish_status = 1
+      and id in (
+        select
+          res_id
+        from
+          sec_res
+        where 1 = 1
+          and res_type = 'menu'
+          and (
+            (owner_type = 1 and owner_id = #{userId})
+            or
+            (owner_type = 2 and owner_id in (select role_id from sec_user_rel_role where user_id = #{userId}))
+          )
+      )
+    order by seq
+  </select>
+  <select id="selectMaxSeq" resultType="java.lang.Integer">
+    select max(seq) from sec_menu
+  </select>
+  <delete id="deleteById" parameterType="java.lang.Integer">
+    delete from sec_menu
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sunmnet.bigdata.web.security.model.po.SecMenu">
+    insert into sec_menu (id, parent_id, seq, 
+      name, url, icon_url, 
+      icon_selected_url, status, publish_status, 
+      type, remark, create_time, 
+      update_time)
+    values (#{id,jdbcType=INTEGER}, #{parentId,jdbcType=INTEGER}, #{seq,jdbcType=INTEGER},
+      #{name,jdbcType=VARCHAR}, #{url,jdbcType=VARCHAR}, #{iconUrl,jdbcType=VARCHAR}, 
+      #{iconSelectedUrl,jdbcType=VARCHAR}, #{status,jdbcType=TINYINT}, #{publishStatus,jdbcType=TINYINT}, 
+      #{type,jdbcType=TINYINT}, #{remark,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, 
+      #{updateTime,jdbcType=TIMESTAMP})
+  </insert>
+  <insert id="insertSelective" parameterType="com.sunmnet.bigdata.web.security.model.po.SecMenu">
+    insert into sec_menu
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        id,
+      </if>
+      <if test="parentId != null">
+        parent_id,
+      </if>
+      <if test="seq != null">
+        seq,
+      </if>
+      <if test="name != null">
+        name,
+      </if>
+      <if test="url != null">
+        url,
+      </if>
+      <if test="iconUrl != null">
+        icon_url,
+      </if>
+      <if test="iconSelectedUrl != null">
+        icon_selected_url,
+      </if>
+      <if test="status != null">
+        status,
+      </if>
+      <if test="publishStatus != null">
+        publish_status,
+      </if>
+      <if test="type != null">
+        type,
+      </if>
+      <if test="remark != null">
+        remark,
+      </if>
+      <if test="createTime != null">
+        create_time,
+      </if>
+      <if test="updateTime != null">
+        update_time,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="parentId != null">
+        #{parentId,jdbcType=INTEGER},
+      </if>
+      <if test="seq != null">
+        #{seq,jdbcType=INTEGER},
+      </if>
+      <if test="name != null">
+        #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="url != null">
+        #{url,jdbcType=VARCHAR},
+      </if>
+      <if test="iconUrl != null">
+        #{iconUrl,jdbcType=VARCHAR},
+      </if>
+      <if test="iconSelectedUrl != null">
+        #{iconSelectedUrl,jdbcType=VARCHAR},
+      </if>
+      <if test="status != null">
+        #{status,jdbcType=TINYINT},
+      </if>
+      <if test="publishStatus != null">
+        #{publishStatus,jdbcType=TINYINT},
+      </if>
+      <if test="type != null">
+        #{type,jdbcType=TINYINT},
+      </if>
+      <if test="remark != null">
+        #{remark,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null">
+        #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateTime != null">
+        #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByIdSelective" parameterType="com.sunmnet.bigdata.web.security.model.po.SecMenu">
+    update sec_menu
+    <set>
+      <if test="parentId != null">
+        parent_id = #{parentId,jdbcType=INTEGER},
+      </if>
+      <if test="seq != null">
+        seq = #{seq,jdbcType=INTEGER},
+      </if>
+      <if test="name != null">
+        name = #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="url != null">
+        url = #{url,jdbcType=VARCHAR},
+      </if>
+      <if test="iconUrl != null">
+        icon_url = #{iconUrl,jdbcType=VARCHAR},
+      </if>
+      <if test="iconSelectedUrl != null">
+        icon_selected_url = #{iconSelectedUrl,jdbcType=VARCHAR},
+      </if>
+      <if test="status != null">
+        status = #{status,jdbcType=TINYINT},
+      </if>
+      <if test="publishStatus != null">
+        publish_status = #{publishStatus,jdbcType=TINYINT},
+      </if>
+      <if test="type != null">
+        type = #{type,jdbcType=TINYINT},
+      </if>
+      <if test="remark != null">
+        remark = #{remark,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null">
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateTime != null">
+        update_time = #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateById" parameterType="com.sunmnet.bigdata.web.security.model.po.SecMenu">
+    update sec_menu
+    set parent_id = #{parentId,jdbcType=INTEGER},
+      seq = #{seq,jdbcType=INTEGER},
+      name = #{name,jdbcType=VARCHAR},
+      url = #{url,jdbcType=VARCHAR},
+      icon_url = #{iconUrl,jdbcType=VARCHAR},
+      icon_selected_url = #{iconSelectedUrl,jdbcType=VARCHAR},
+      status = #{status,jdbcType=TINYINT},
+      publish_status = #{publishStatus,jdbcType=TINYINT},
+      type = #{type,jdbcType=TINYINT},
+      remark = #{remark,jdbcType=VARCHAR},
+      create_time = #{createTime,jdbcType=TIMESTAMP},
+      update_time = #{updateTime,jdbcType=TIMESTAMP}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="disableMenuById" parameterType="java.lang.Integer">
+    update sec_menu set status = 2 where id = #{id} or parent_id = #{id}
+  </update>
+  <update id="increSeq" parameterType="java.lang.Integer">
+    update sec_menu set seq = seq + 1 where seq >= #{startSeq}
+  </update>
+</mapper>

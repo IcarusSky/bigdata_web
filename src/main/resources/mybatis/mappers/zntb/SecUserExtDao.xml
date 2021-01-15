@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sunmnet.bigdata.web.zntb.persistent.SecUserExtDao">
+  <select id="selectByUserId" parameterType="java.lang.Integer" resultType="com.sunmnet.bigdata.web.zntb.model.po.SecUserExt">
+    select * from sec_user_ext where user_id = #{userId}
+  </select>
+
+  <select id="selectInfoByUserId" resultType="com.sunmnet.bigdata.web.zntb.model.po.SecUserExt">
+    select
+      u.name as name,
+      u.account_code as accountCode,
+      e.*,
+      if(d.dep_id is null, '', d.dep_name) as departmentName,
+      if(p.position_id is null, '', p.position_name) as positionName,
+      if(a.academy_code is null, '', a.academy_name) as academyName,
+      if(m.major_code is null, '', m.major_name) as majorName
+    from
+      sec_user u inner join
+      sec_user_ext e on u.id = e.user_id left outer join
+      sec_department d on e.department_id = d.dep_id left outer join
+      sec_dep_position p on e.position_id = p.position_id left outer join
+      sec_academy a on e.academy_code = a.academy_code left outer join
+      sec_major m on e.major_code = m.major_code
+    where 1 = 1
+      and u.id = ${userId}
+  </select>
+
+  <select id="selectByName" resultType="com.sunmnet.bigdata.web.zntb.model.po.SecUserExt">
+    select
+      u.user_name as userName, 
+      u.name as name,
+      u.account_code as accountCode,
+      e.*,
+      if(d.dep_id is null, '', d.dep_name) as departmentName,
+      if(p.position_id is null, '', p.position_name) as positionName,
+      if(a.academy_code is null, '', a.academy_name) as academyName,
+      if(m.major_code is null, '', m.major_name) as majorName
+    from
+      sec_user u inner join
+      sec_user_ext e on u.id = e.user_id left outer join
+      sec_department d on e.department_id = d.dep_id left outer join
+      sec_dep_position p on e.position_id = p.position_id left outer join
+      sec_academy a on e.academy_code = a.academy_code left outer join
+      sec_major m on e.major_code = m.major_code
+    where  u.name like '%${name}%' or u.user_name like '%${name}%'
+    <if test="topN != null and topN !=''">
+      limit ${topN}
+    </if>
+  </select>
+
+  <insert id="insert">
+    insert into sec_user_ext (user_id, academy_code, major_code, department_id, position_id) values
+      (#{userId}, #{academyCode}, #{majorCode}, #{departmentId}, #{positionId})
+  </insert>
+
+  <update id="updateByUserId">
+    update sec_user_ext set academy_code = #{academyCode}, major_code = #{majorCode}, department_id = #{departmentId},
+      position_id = #{positionId} where user_id = #{userId}
+  </update>
+
+  <delete id="deleteByUserId" parameterType="java.lang.Integer">
+    delete from sec_user_ext where user_id = #{userId}
+  </delete>
+
+  <select id="confirmUserInfo" resultType="com.sunmnet.bigdata.web.zntb.model.dto.AccountUser" parameterType="java.lang.String">
+    SELECT
+      s.user_name AS name,
+      s.account_code AS accountCode
+    FROM
+      sec_user AS s
+    WHERE
+      s.account_code = #{userName}
+  </select>
+</mapper>

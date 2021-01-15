@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sunmnet.bigdata.web.zntb.persistent.FormDataAuditorDao">
+    <insert id="saveBatch">
+        INSERT INTO `form_data_auditor` (
+        `form_id`,
+        `auditor_type`,
+        `auditor_id`,
+        `account_type`
+        )
+        VALUES
+        <foreach collection="formDataAuditors" item="item" index="index" separator=",">
+            (
+				#{item.formId},
+				#{item.auditorType},
+				#{item.auditorId},
+				#{item.accountType}
+            )
+        </foreach>
+    </insert>
+
+    <select id="getListByFormId" resultType="com.sunmnet.bigdata.web.zntb.model.po.FormDataAuditor">
+        SELECT
+          w.`id` id,
+          w.`form_id` formId,
+          w.`auditor_type` auditorType,
+          w.`auditor_id` auditorId,
+          w.`account_type` accountType,
+		u.`name` as name,
+		case
+			when  w.auditor_type != 'department' then null
+			when d.parent_id = -1 then 1
+			else 2
+		end as leavl
+        FROM
+          form_data_auditor w
+		left join sec_user u on u.account_code = w.auditor_id and w.auditor_type = 'account_code'
+		left join sec_department d on d.dep_id=w.auditor_id and w.auditor_type = 'department'
+        where
+          form_id = #{id}
+    </select>
+
+    <delete id="deleteByFormId">
+        DELETE FROM form_data_auditor WHERE form_id = #{formId}
+    </delete>
+
+    <!-- 获取对应表单的所有数据审核人 -->
+    <select id="getDataAuditorListByCondition" resultType="com.sunmnet.bigdata.web.zntb.model.po.SecUserExt">
+		SELECT DISTINCT
+			DISTINCT(us.id) user_id,
+			us.`name` ,
+			us.account_code,
+			us.academy_code,
+			us.academy_name,
+			us.major_code,
+			us.major_name,
+			us.department_id,
+			us.dep_name department_name,
+			us.position_id,
+			us.position_name
+		FROM
+			form_data_auditor w
+		LEFT JOIN (
+			SELECT
+				u.`name`,
+				u.id,
+				u.account_code,
+				ext.academy_code,
+				sac.academy_name,
+				ext.major_code,
+				sma.major_name,
+				ext.department_id,
+				sde.dep_name,
+				ext.position_id,
+				spo.position_name,
+				ro.role_id,
+				u.account_type
+
+			FROM
+				sec_user u
+			LEFT JOIN sec_user_ext ext ON u.id = ext.user_id
+			LEFT JOIN sec_academy sac ON sac.academy_code = ext.academy_code
+			LEFT JOIN sec_major sma ON sma.major_code = ext.major_code
+			LEFT JOIN sec_department sde ON sde.dep_id = ext.department_id
+			LEFT JOIN sec_dep_position spo ON spo.position_id = ext.position_id
+			LEFT JOIN sec_user_rel_role ro ON ro.user_id = u.id
+
+			WHERE 1=1
+			<if test="departmentId != null">
+				and ext.department_id = #{departmentId}
+			</if>
+			<if test="positionId != null">
+				and ext.position_id = #{positionId}
+			</if>
+			<if test="academyCode != null">
+				and sac.academy_code = #{academyCode}
+			</if>
+			<if test="academyName !=''">
+				<![CDATA[and sac.academy_name like concat('%',#{academyName},'%')]]>
+			</if>
+			<if test="majorCode != null">
+				and sma.major_code = #{majorCode}
+			</if>
+			<if test="majorName !=''">
+				<![CDATA[and sma.major_name like concat('%',#{majorName},'%')]]>
+			</if>
+		) us ON (
+			w.auditor_type = 'account_code'
+			AND auditor_id = us.account_code
+		)
+		OR (
+			w.auditor_type = 'academy'
+			AND auditor_id = us.academy_code
+			AND w.account_type = us.account_type
+		)
+		OR (
+			w.auditor_type = 'major'
+			AND auditor_id = us.major_code
+			AND w.account_type = us.account_type
+		)
+		OR (
+			w.auditor_type = 'department'
+			AND auditor_id = us.department_id
+			AND w.account_type = us.account_type
+		)
+		OR (
+			w.auditor_type = 'position'
+			AND auditor_id = us.position_id
+			AND w.account_type = us.account_type
+		)
+		OR (
+			w.auditor_type = 'role'
+			AND auditor_id = us.role_id
+		)
+		WHERE
+			w.form_id = #{formId}
+		AND us.id IS NOT NULL   	
+    </select>
+    
+
+</mapper>

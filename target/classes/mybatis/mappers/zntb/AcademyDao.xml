@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sunmnet.bigdata.web.zntb.persistent.AcademyDao">
+    <select id="findAll" resultType="com.sunmnet.bigdata.web.zntb.model.po.Academy">
+      select academy_code as code ,
+            academy_name as name
+        from sec_academy  where status = 1 ;
+  </select>
+
+    <insert id="save" parameterType="com.sunmnet.bigdata.web.zntb.model.po.Academy">
+        <![CDATA[
+
+        INSERT INTO
+        sec_academy (academy_code,academy_name)
+        VALUES (#{code},#{name})
+
+        ]]>
+    </insert>
+
+    <update id="update">
+        <![CDATA[
+
+        UPDATE sec_academy SET
+        academy_name = #{name} , update_time = now()
+        where academy_code = #{code}
+
+        ]]>
+    </update>
+
+    <update id="delete">
+        <![CDATA[
+
+        UPDATE sec_academy SET
+        status = 2, update_time = now()
+        where academy_code = #{code}
+
+        ]]>
+    </update>
+
+    <select id="countByAcademyCode" resultType="int">
+        select count(1)
+        from sec_academy where academy_code = #{academyCode} and status=1;
+    </select>
+
+    <select id="countByAcademyName" resultType="int">
+        select count(1)
+        from sec_academy where trim(academy_name) = #{academyName} and status=1;
+    </select>
+
+    <select id="findByCode" resultType="com.sunmnet.bigdata.web.zntb.model.po.Academy">
+        select academy_code as code,academy_name as name
+        from sec_academy where trim(academy_code) = #{academyCode} and status=1;
+    </select>
+</mapper>

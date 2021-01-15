@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sunmnet.bigdata.web.zntb.persistent.CategoryDao">
+    <select id="getCategoryListByParentId" resultType="com.sunmnet.bigdata.web.zntb.model.po.DashboardCategory">
+        SELECT
+            category_id id,
+            user_id userId,
+            category_name name,
+            parent_id parentId,
+            category_type type,
+            create_time createTime,
+            update_time updateTime
+        FROM dashboard_category
+        where
+        1=1
+        AND category_type = #{type}
+        AND parent_id = #{parentId}
+        <if test="userId != null">
+            <![CDATA[
+            AND user_id = #{userId}
+            ]]>
+        </if>
+
+        order by create_time, category_name
+    </select>
+
+    <insert id="save" parameterType="com.sunmnet.bigdata.web.zntb.model.po.DashboardCategory">
+        <![CDATA[
+        INSERT INTO dashboard_category
+        (user_id,category_name,category_type,parent_id)
+        VALUES (#{userId},#{name},#{type},#{parentId})
+        ]]>
+    </insert>
+
+    <update id="update" parameterType="com.sunmnet.bigdata.web.zntb.model.po.DashboardCategory">
+        <![CDATA[
+        UPDATE dashboard_category SET
+        category_name = #{name} ,category_type = #{type} ,parent_id = #{parentId}, update_time = now()
+        where category_id = #{id}
+        ]]>
+    </update>
+
+    <update id="updateParentId">
+        <![CDATA[
+        UPDATE dashboard_category SET
+        parent_id = #{parentId}, update_time = now()
+        where category_id = #{id}
+        ]]>
+    </update>
+
+    <update id="updateName" parameterType="com.sunmnet.bigdata.web.zntb.model.po.DashboardCategory">
+        <![CDATA[
+        UPDATE dashboard_category SET
+        category_name = #{name}, update_time = now()
+        where category_id = #{id}
+        ]]>
+    </update>
+
+
+    <select id="countExistCategoryName" resultType="java.lang.Long">
+        SELECT count(1) from dashboard_category where 1=1
+        <if test="id != null" >
+        <![CDATA[
+            and category_id <> #{id}
+            ]]>
+        </if>
+          and category_name = #{name}
+          and category_type = #{type}
+          and user_id = #{userId}
+    </select>
+
+    <delete id="delete">
+        delete from dashboard_category where category_id = #{0}
+    </delete>
+</mapper>

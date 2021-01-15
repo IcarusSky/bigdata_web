@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sunmnet.bigdata.web.security.persistent.SecResDao">
+  <resultMap id="BaseResultMap" type="com.sunmnet.bigdata.web.security.model.po.SecRes">
+    <id column="id" jdbcType="INTEGER" property="id"/>
+    <result column="owner_type" jdbcType="TINYINT" property="ownerType"/>
+    <result column="owner_id" jdbcType="INTEGER" property="ownerId"/>
+    <result column="res_type" jdbcType="VARCHAR" property="resType"/>
+    <result column="res_id" jdbcType="BIGINT" property="resId"/>
+    <result column="permission" jdbcType="TINYINT" property="permission"/>
+  </resultMap>
+  <sql id="Base_Column_List">
+    id, owner_type, owner_id, res_type, res_id , permission
+  </sql>
+  <select id="selectById" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List"/>
+    from sec_res
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="resIdList" resultType="java.lang.Long">
+    select
+      distinct res_id
+    from
+      sec_res
+    where 1 = 1
+      and res_type = #{resType}
+      and (
+        (owner_type = 1 and owner_id = #{userId})
+        or
+        (owner_type = 2 and owner_id in (select role_id from sec_user_rel_role where user_id = #{userId}))
+      )
+  </select>
+  <select id="selectPermission" resultType="java.lang.Integer">
+    select
+        max(permission) as permission
+    from
+      sec_res
+    where 1 = 1
+    and res_type = #{resType}
+    and res_id = #{resId}
+    and (
+    (owner_type = 1 and owner_id = #{userId})
+    or
+    (owner_type = 2 and owner_id in (select role_id from sec_user_rel_role where user_id = #{userId}))
+    )
+    GROUP BY res_id,res_type
+  </select>
+
+  <select id="selectResByUserIdAndResType" resultMap="BaseResultMap">
+    select
+        res_id,res_type,max(permission) as permission
+    from
+      sec_res
+    where 1 = 1
+    and res_type = #{resType}
+    and (
+    (owner_type = 1 and owner_id = #{userId})
+    or
+    (owner_type = 2 and owner_id in (select role_id from sec_user_rel_role where user_id = #{userId}))
+    )
+    GROUP BY res_id,res_type
+  </select>
+
+
+  <select id="selectAllRoleRes" resultMap="BaseResultMap">
+    select
+      <include refid="Base_Column_List"/>
+    from
+      sec_res
+    where 1 = 1
+      and owner_type = 2
+  </select>
+  <select id="selectRoleRes" resultMap="BaseResultMap">
+    select
+      <include refid="Base_Column_List"/>
+    from
+      sec_res
+    where 1 = 1
+      and owner_type = 2
+      and owner_id = #{roleId}
+  </select>
+
+  <delete id="deleteById" parameterType="java.lang.Integer">
+    delete from sec_res
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+
+  <delete id="deleteByRes" >
+    delete from sec_res
+    where
+    res_type = #{resType,jdbcType=VARCHAR} and
+    res_id = #{resId,jdbcType=BIGINT}
+  </delete>
+
+  <delete id="deleteByOwner" >
+    delete from sec_res
+    where
+    owner_type = #{ownerType,jdbcType=TINYINT} AND
+    owner_id = #{ownerId,jdbcType=INTEGER}
+  </delete>
+
+  <delete id="deleteByMenuId" parameterType="java.lang.Integer">
+    delete from sec_res where res_type = 'menu' and res_id in(
+      select id from sec_menu where id = #{menuId} or parent_id = #{menuId}
+    )
+  </delete>
+
+  <insert id="insert" parameterType="com.sunmnet.bigdata.web.security.model.po.SecRes">
+    insert into sec_res (id, owner_type, owner_id, 
+      res_type, res_id, permission)
+    values (#{id,jdbcType=INTEGER}, #{ownerType,jdbcType=TINYINT}, #{ownerId,jdbcType=INTEGER}, 
+      #{resType,jdbcType=VARCHAR}, #{resId,jdbcType=BIGINT} ,#{permission,jdbcType=INTEGER})
+  </insert>
+  <insert id="insertSelective" parameterType="com.sunmnet.bigdata.web.security.model.po.SecRes">
+    insert into sec_res
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        id,
+      </if>
+      <if test="ownerType != null">
+        owner_type,
+      </if>
+      <if test="ownerId != null">
+        owner_id,
+      </if>
+      <if test="resType != null">
+        res_type,
+      </if>
+      <if test="resId != null">
+        res_id,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="ownerType != null">
+        #{ownerType,jdbcType=TINYINT},
+      </if>
+      <if test="ownerId != null">
+        #{ownerId,jdbcType=INTEGER},
+      </if>
+      <if test="resType != null">
+        #{resType,jdbcType=VARCHAR},
+      </if>
+      <if test="resId != null">
+        #{resId,jdbcType=BIGINT},
+      </if>
+    </trim>
+  </insert>
+  <insert id="insertBatch" parameterType="com.sunmnet.bigdata.web.security.model.po.SecRes">
+    insert into sec_res (owner_type, owner_id, res_type, res_id) values
+    <foreach item="item" collection="records" separator=",">
+      (#{item.ownerType}, #{item.ownerId}, #{item.resType}, #{item.resId})
+    </foreach>
+  </insert>
+  <update id="updateByIdSelective" parameterType="com.sunmnet.bigdata.web.security.model.po.SecRes">
+    update sec_res
+    <set>
+      <if test="ownerType != null">
+        owner_type = #{ownerType,jdbcType=TINYINT},
+      </if>
+      <if test="ownerId != null">
+        owner_id = #{ownerId,jdbcType=INTEGER},
+      </if>
+      <if test="resType != null">
+        res_type = #{resType,jdbcType=VARCHAR},
+      </if>
+      <if test="resId != null">
+        res_id = #{resId,jdbcType=BIGINT},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateById" parameterType="com.sunmnet.bigdata.web.security.model.po.SecRes">
+    update sec_res
+    set owner_type = #{ownerType,jdbcType=TINYINT},
+      owner_id = #{ownerId,jdbcType=INTEGER},
+      res_type = #{resType,jdbcType=VARCHAR},
+      res_id = #{resId,jdbcType=BIGINT}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+</mapper>
